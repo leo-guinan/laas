@@ -19,5 +19,8 @@
 
   document.querySelectorAll("[data-cta]").forEach((el) => {
     el.href = withParams(bookingUrl);
+    el.addEventListener("click", () => {
+      window.fathom?.trackEvent("Calibration CTA Clicked");
+    });
   });
 })();
