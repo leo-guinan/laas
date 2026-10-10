@@ -1,0 +1,231 @@
+:root {
+  --bg: #f6f3ec;
+  --paper: #fffdf8;
+  --text: #191919;
+  --muted: #68645d;
+  --line: #d9d4c9;
+  --accent: #ef5a2f;
+  --max: 1080px;
+  --narrow: 760px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  width: min(calc(100% - 40px), var(--max));
+  margin: 0 auto;
+}
+
+.narrow { max-width: var(--narrow); }
+
+.hero {
+  padding: 96px 0 88px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  max-width: 900px;
+  font-size: clamp(54px, 8vw, 96px);
+  line-height: 0.98;
+  font-weight: 720;
+}
+
+h2 {
+  font-size: clamp(36px, 5vw, 56px);
+  line-height: 1.04;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+h3 {
+  margin-top: 44px;
+  margin-bottom: 12px;
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+p { margin: 0 0 20px; }
+
+.hero-copy {
+  max-width: 760px;
+  margin-top: 34px;
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.32;
+}
+
+.hero-copy.secondary {
+  margin-top: 18px;
+  color: #343230;
+  font-size: clamp(20px, 2.2vw, 25px);
+}
+
+.button {
+  display: inline-block;
+  margin-top: 20px;
+  padding: 15px 20px;
+  border: 1px solid var(--text);
+  border-radius: 7px;
+  background: var(--text);
+  color: white;
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .12s ease, opacity .12s ease;
+}
+
+.button:hover { transform: translateY(-1px); opacity: .92; }
+
+.micro {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.centered { text-align: center; }
+
+.section {
+  padding: 84px 0;
+  border-top: 1px solid var(--line);
+}
+
+.section-muted { background: var(--paper); }
+
+blockquote {
+  margin: 34px 0 42px;
+  padding-left: 24px;
+  border-left: 3px solid var(--accent);
+  font-size: clamp(26px, 3.5vw, 36px);
+  line-height: 1.3;
+  font-weight: 650;
+}
+
+.proof-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 42px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.proof-item {
+  min-height: 160px;
+  padding: 24px;
+  background: var(--paper);
+}
+
+.proof-item strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 23px;
+  line-height: 1.15;
+}
+
+.proof-item span {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.video-placeholder {
+  aspect-ratio: 16/9;
+  display: grid;
+  place-items: center;
+  margin-top: 30px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #1c1c1c;
+  color: white;
+  text-align: center;
+}
+
+.video-placeholder p { margin: 10px 0 0; }
+.video-placeholder small { color: #c7c7c7; }
+.play { font-size: 34px; }
+
+.formula {
+  margin: 38px 0 24px;
+  padding: 24px;
+  border-left: 3px solid var(--accent);
+  background: var(--paper);
+}
+
+.formula span,
+.formula strong { display: block; }
+.formula span { color: var(--muted); font-size: 14px; margin-bottom: 6px; }
+.formula strong { font-size: 24px; line-height: 1.35; }
+
+.example {
+  margin: 24px 0 14px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.example p:last-child { margin-bottom: 0; }
+
+.price-line {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  align-items: baseline;
+  margin: 34px 0 26px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.price-line strong { font-size: 30px; }
+.price-line span { color: var(--muted); }
+
+.checklist {
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.checklist li::before {
+  content: "✓";
+  display: inline-block;
+  width: 28px;
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.close { padding-bottom: 110px; }
+
+@media (max-width: 760px) {
+  body { font-size: 17px; }
+  .hero { padding: 68px 0 64px; }
+  .section { padding: 64px 0; }
+  .proof-grid { grid-template-columns: 1fr; }
+  .proof-item { min-height: 0; }
+  .price-line { grid-template-columns: 1fr; gap: 4px; }
+  .button { display: block; width: 100%; text-align: center; }
+}
