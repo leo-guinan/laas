@@ -1,6 +1,8 @@
 (() => {
   const cfg = window.LAAS_CONFIG || {};
   const bookingUrl = cfg.bookingUrl || "#";
+  const experiment = "laas_three_way_v1";
+  const variant = "sales";
 
   const sourceParams = new URLSearchParams(window.location.search);
 
@@ -11,6 +13,8 @@
       for (const [key, value] of sourceParams.entries()) {
         if (!target.searchParams.has(key)) target.searchParams.set(key, value);
       }
+      target.searchParams.set("experiment", experiment);
+      target.searchParams.set("landing_variant", variant);
       return target.toString();
     } catch {
       return url;
