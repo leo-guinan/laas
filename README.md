@@ -4,7 +4,9 @@ A minimal, zero-build static sales page designed for GitHub Pages.
 
 ## What is included
 
-- `index.html` — canonical sales page
+- `index.html` — canonical sales page (agent eval calibration offer)
+- `meet-leo.html` — the human half: background, track record, proof in progress
+- `meet-marvin.html` — the agent half: Marvin's role, his evals, known failures
 - `styles.css` — simple editorial styling using system fonts only
 - `config.js` — paid Cal.com booking URL
 - `script.js` — connects every CTA to the booking URL and preserves incoming query parameters
@@ -22,7 +24,7 @@ No build step, framework, package manager, or external fonts are required.
 
 ## Design principles
 
-This version intentionally strips out Jay, Marvin, Creator APIs, BiPU, and broader theory from the core sales flow.
+The offer is now evals for people who already run a named agent. Marvin is back, but only as proof: his evals and failures live on their own page. Creator APIs, BiPU and broader theory stay out of the sales flow.
 
 The page only tries to answer:
 

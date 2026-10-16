@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Marvin is Leo's named AI agent. Here is what he's allowed to do, the evals he's held to, and where he still fails." />
+  <title>Meet Marvin — Leo as a Service</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.usefathom.com/script.js" data-site="XERIAWTA" defer></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Leo as a Service</a>
+      <div class="links">
+        <a href="meet-leo.html">Meet Leo</a>
+        <a href="meet-marvin.html" aria-current="page">Meet Marvin</a>
+        <a data-cta href="#">Book</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero wrap">
+      <p class="eyebrow">Meet Marvin · the agent half</p>
+      <h1>Marvin has a job description and a scoreboard.</h1>
+      <p class="hero-copy">Marvin is the agent I've built around my own work over several years. He learns my projects, my vocabulary and my judgment, and his job is to make work stop needing me.</p>
+      <p class="hero-copy secondary">He's useful because he's measured. Below are the standards he's held to, and the places he still falls short.</p>
+    </section>
+
+    <section class="section section-muted">
+      <div class="wrap narrow">
+        <p class="eyebrow">Role</p>
+        <h2>What Marvin is allowed to do.</h2>
+        <ul class="checklist">
+          <li><strong>Acts alone</strong> on drafting, research, summarizing calls, and turning one piece of source material into many.</li>
+          <li><strong>Asks Leo</strong> before anything public, anything that commits money, and any claim he can't trace to a source.</li>
+          <li><strong>Stops</strong> when the request contradicts a recorded decision, or when he'd have to guess about a person.</li>
+        </ul>
+        <p>The boundary matters more than the capability. A reliable agent isn't one that never fails. It's one that knows when it needs help.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap narrow">
+        <p class="eyebrow">Marvin's evals</p>
+        <h2>The standards he's held to.</h2>
+        <p>Each eval is a written rule, a test that checks it, and a result that gets re-run when models or prompts change.</p>
+
+        <!-- Leo: replace each "Latest run" with real numbers as runs are published. -->
+
+        <article class="eval">
+          <h3>Never Repeat Yourself</h3>
+          <p class="meta">Memory · <span class="status">Core</span></p>
+          <dl>
+            <dt>Standard</dt><dd>Leo should never have to explain the same context, preference or correction twice.</dd>
+            <dt>Test</dt><dd>Every correction Leo gives is logged. Any correction that appears a second time is a failure.</dd>
+            <dt>Why</dt><dd>A mistake an agent makes twice is a missing test, not bad luck.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+
+        <article class="eval">
+          <h3>Source-bounded claims</h3>
+          <p class="meta">Honesty · <span class="status">Core</span></p>
+          <dl>
+            <dt>Standard</dt><dd>Every factual claim traces to a source Marvin was given or retrieved. Unknowns are stated as unknown.</dd>
+            <dt>Test</dt><dd>Sample outputs, strip each claim, check it against the cited source. Invented detail fails, even when it happens to be right.</dd>
+            <dt>Why</dt><dd>An agent that fills gaps confidently is more dangerous than one that admits them.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+
+        <article class="eval">
+          <h3>Judgment agreement</h3>
+          <p class="meta">Taste · <span class="status">In calibration</span></p>
+          <dl>
+            <dt>Standard</dt><dd>When shown two outputs, Marvin picks the one Leo would pick, for the reason Leo would give.</dd>
+            <dt>Test</dt><dd>A/B pairs of real drafts. Leo and Marvin each choose and explain. Disagreements become training material.</dd>
+            <dt>Why</dt><dd>The goal isn't forced agreement. It's exposing the scoring function in the human's head.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+
+        <article class="eval">
+          <h3>Knows when to ask</h3>
+          <p class="meta">Escalation · <span class="status">Core</span></p>
+          <dl>
+            <dt>Standard</dt><dd>Marvin escalates exactly the cases his rules say to escalate, and no others.</dd>
+            <dt>Test</dt><dd>A deliberately ambiguous, incomplete and adversarial case set. Score both missed escalations and unnecessary ones.</dd>
+            <dt>Why</dt><dd>Too few escalations is risk. Too many is just a more expensive way of doing it yourself.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+
+        <article class="eval">
+          <h3>Plain, simple output</h3>
+          <p class="meta">Communication · <span class="status">Core</span></p>
+          <dl>
+            <dt>Standard</dt><dd>Concise, direct, no hype. A stranger can understand it without knowing Leo's frameworks.</dd>
+            <dt>Test</dt><dd>Outputs are scored on length against a target and checked for unexplained internal jargon.</dd>
+            <dt>Why</dt><dd>Leo's weakness is too many words. Marvin is measured on not inheriting it.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+
+        <article class="eval">
+          <h3>Net leverage</h3>
+          <p class="meta">Economics · <span class="status">Core</span></p>
+          <dl>
+            <dt>Standard</dt><dd>Time removed from Leo's week is greater than model cost plus supervision and correction time.</dd>
+            <dt>Test</dt><dd>Weekly: hours of work Marvin owns versus hours Leo spent reviewing, correcting and re-prompting.</dd>
+            <dt>Why</dt><dd>An impressive agent that needs 40 minutes of supervision to save 45 is not leverage.</dd>
+            <dt>Latest run</dt><dd>Publishing soon</dd>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="section section-muted">
+      <div class="wrap narrow">
+        <p class="eyebrow">Known failures</p>
+        <h2>Where Marvin still breaks.</h2>
+        <p>Publishing failures is part of the standard. If an eval only ever shows passes, it isn't testing anything.</p>
+        <ul class="checklist">
+          <li>Imports Leo's own philosophy when asked to model someone else's judgment.</li>
+          <li>Over-produces: generates more options than a human can usefully review.</li>
+          <li>Needs the source material, not just a homepage, before he can model a person's frameworks.</li>
+        </ul>
+        <p class="micro">These came from real runs, including the open <a href="https://github.com/leo-guinan/creator-eval-model-benchmarks">creator eval benchmarks</a>.</p>
+      </div>
+    </section>
+
+    <section class="section close">
+      <div class="wrap narrow">
+        <p class="eyebrow">Your agent next</p>
+        <h2>Want this page for your agent?</h2>
+        <p>An Eval Calibration produces the same thing for the agent you've already named: a role, written standards, the tests that check them, and an honest list of where it fails.</p>
+        <a class="button" data-cta href="#">Start an Eval Calibration — $1,000</a>
+        <p class="micro">Or <a href="meet-leo.html">meet the human half</a> first.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

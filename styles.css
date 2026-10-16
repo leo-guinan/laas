@@ -229,3 +229,119 @@ blockquote {
   .price-line { grid-template-columns: 1fr; gap: 4px; }
   .button { display: block; width: 100%; text-align: center; }
 }
+
+/* ---------- Site nav ---------- */
+.site-nav {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.site-nav .wrap {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  font-size: 15px;
+}
+.site-nav a { color: var(--text); text-decoration: none; }
+.site-nav a:hover { color: var(--accent); }
+.site-nav .brand { font-weight: 700; }
+.site-nav .links { display: flex; gap: 20px; flex-wrap: wrap; }
+.site-nav a[aria-current="page"] { color: var(--accent); }
+
+/* ---------- Pair cards (index) ---------- */
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin-top: 36px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.pair a {
+  display: block;
+  padding: 28px;
+  background: var(--paper);
+  color: var(--text);
+  text-decoration: none;
+}
+.pair a:hover { background: #fff; }
+.pair strong { display: block; font-size: 26px; letter-spacing: -0.02em; margin-bottom: 8px; }
+.pair span { color: var(--muted); font-size: 16px; }
+.pair em { display: block; margin-top: 16px; color: var(--accent); font-style: normal; font-weight: 700; font-size: 15px; }
+
+/* ---------- Six questions ---------- */
+.questions {
+  counter-reset: q;
+  margin: 30px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.questions li {
+  counter-increment: q;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 8px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.questions li::before {
+  content: counter(q);
+  color: var(--accent);
+  font-weight: 800;
+}
+.questions b { display: block; }
+.questions span { color: var(--muted); font-size: 16px; }
+
+/* ---------- Eval cards (Marvin) ---------- */
+.eval {
+  margin: 28px 0;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.eval h3 { margin-top: 0; }
+.eval .meta { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.eval dl { margin: 0; display: grid; grid-template-columns: 130px 1fr; gap: 10px 18px; font-size: 16px; }
+.eval dt { color: var(--muted); font-weight: 700; }
+.eval dd { margin: 0; }
+.status {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- Performance card ---------- */
+.card {
+  margin: 30px 0;
+  padding: 24px;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  background: var(--paper);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.card div { display: grid; grid-template-columns: 170px 1fr; gap: 12px; }
+.card b { color: var(--muted); font-weight: 600; }
+
+/* ---------- Timeline (Leo) ---------- */
+.timeline { margin: 26px 0 0; padding: 0; list-style: none; }
+.timeline li {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 18px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+.timeline b { color: var(--accent); font-size: 15px; }
+
+@media (max-width: 760px) {
+  .pair { grid-template-columns: 1fr; }
+  .eval dl, .card div, .timeline li { grid-template-columns: 1fr; gap: 2px; }
+  .site-nav .wrap { flex-direction: column; align-items: flex-start; gap: 8px; }
+}
