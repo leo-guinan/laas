@@ -43,11 +43,31 @@
 
     <section class="section">
       <div class="wrap narrow">
+        <p class="eyebrow">Current evidence</p>
+        <h2>One month in: the review is half done.</h2>
+        <p>The current Patrick review is an in-progress process assessment, pending client confirmation and updates. It is not a leverage ratio or a claim of business success.</p>
+        <div class="score-card" aria-label="Current Patrick review score">
+          <div class="score-main"><strong>64/100</strong><span>provisional process score</span></div>
+          <div class="score-grid">
+            <div><b>12/20</b><span>Requirement capture</span></div>
+            <div><b>8/20</b><span>First-pass completeness</span></div>
+            <div><b>17/20</b><span>Correction follow-through</span></div>
+            <div><b>13/15</b><span>Evidence discipline</span></div>
+            <div><b>7/15</b><span>Operational reliability</span></div>
+            <div><b>7/10</b><span>Patrick burden reduction · provisional</span></div>
+          </div>
+        </div>
+        <p class="micro">Outcome: pending. The early phase was about finding the useful pieces and stabilizing the workflow. Internet Factories is the next layer for measuring leverage across repeatable factories; missing minutes remain unknown, not zero.</p>
+      </div>
+    </section>
+
+    <section class="section section-muted">
+      <div class="wrap narrow">
         <p class="eyebrow">Marvin's evals</p>
         <h2>The standards he's held to.</h2>
-        <p>Each eval is a written rule, a test that checks it, and a result that gets re-run when models or prompts change.</p>
+        <p>Each eval has its own public repository. The links are the artifacts; the statuses below separate measured results from evidence still being assembled.</p>
 
-        <!-- Leo: replace each "Latest run" with real numbers as runs are published. -->
+        <!-- Each status below is evidence-bounded; replace only with a real receipt-backed result. -->
 
         <article class="eval">
           <h3><a href="https://github.com/leo-guinan/marvin-eval-never-repeat-yourself">Never Repeat Yourself</a></h3>
@@ -56,7 +76,7 @@
             <dt>Standard</dt><dd>Leo should never have to explain the same context, preference or correction twice.</dd>
             <dt>Test</dt><dd>Every correction Leo gives is logged. Any correction that appears a second time is a failure.</dd>
             <dt>Why</dt><dd>A mistake an agent makes twice is a missing test, not bad luck.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>0 confirmed exact repeats in the inspected record; coverage incomplete.</dd>
           </dl>
         </article>
 
@@ -67,7 +87,7 @@
             <dt>Standard</dt><dd>Every factual claim traces to a source Marvin was given or retrieved. Unknowns are stated as unknown.</dd>
             <dt>Test</dt><dd>Sample outputs, strip each claim, check it against the cited source. Invented detail fails, even when it happens to be right.</dd>
             <dt>Why</dt><dd>An agent that fills gaps confidently is more dangerous than one that admits them.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>Patrick review preserves sources, unknowns, blocked states, and readback limits; a clean Marvin fixture score is pending.</dd>
           </dl>
         </article>
 
@@ -78,7 +98,7 @@
             <dt>Standard</dt><dd>When shown two outputs, Marvin picks the one Leo would pick, for the reason Leo would give.</dd>
             <dt>Test</dt><dd>A/B pairs of real drafts. Leo and Marvin each choose and explain. Disagreements become training material.</dd>
             <dt>Why</dt><dd>The goal isn't forced agreement. It's exposing the scoring function in the human's head.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>Not measured. Marvin's self-score exists; Patrick's independent score is pending.</dd>
           </dl>
         </article>
 
@@ -89,7 +109,7 @@
             <dt>Standard</dt><dd>Marvin escalates exactly the cases his rules say to escalate, and no others.</dd>
             <dt>Test</dt><dd>A deliberately ambiguous, incomplete and adversarial case set. Score both missed escalations and unnecessary ones.</dd>
             <dt>Why</dt><dd>Too few escalations is risk. Too many is just a more expensive way of doing it yourself.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>Five boundary cases identified; an aggregate escalation rate is pending.</dd>
           </dl>
         </article>
 
@@ -100,7 +120,7 @@
             <dt>Standard</dt><dd>Concise, direct, no hype. A stranger can understand it without knowing Leo's frameworks.</dd>
             <dt>Test</dt><dd>Outputs are scored on length against a target and checked for unexplained internal jargon.</dd>
             <dt>Why</dt><dd>Leo's weakness is too many words. Marvin is measured on not inheriting it.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>Initial packet was corrected from vague to artifact-focused; pass rate is pending.</dd>
           </dl>
         </article>
 
@@ -111,7 +131,7 @@
             <dt>Standard</dt><dd>Time removed from Leo's week is greater than model cost plus supervision and correction time.</dd>
             <dt>Test</dt><dd>Weekly: hours of work Marvin owns versus hours Leo spent reviewing, correcting and re-prompting.</dd>
             <dt>Why</dt><dd>An impressive agent that needs 40 minutes of supervision to save 45 is not leverage.</dd>
-            <dt>Latest run</dt><dd>Publishing soon</dd>
+            <dt>Current evidence</dt><dd>Unmeasured by design during discovery; factory-level instrumentation is next.</dd>
           </dl>
         </article>
       </div>
