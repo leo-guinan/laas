@@ -27,6 +27,7 @@ function handoffFromBooking(payload) {
 }
 
 async function sendBookingBrief(env, handoff, booking) {
+  if (handoff.email?.status === "email_accepted") return handoff.email;
   if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !env.EMAIL_TO) return { status: "email_not_configured" };
   const attendee = booking?.attendees?.[0]?.email || booking?.attendee?.email || "unknown attendee";
   const subject = `Marvin briefing for confirmed booking${booking?.uid ? ` ${booking.uid}` : ""}`;
@@ -45,7 +46,7 @@ async function sendBookingBrief(env, handoff, booking) {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to: [env.EMAIL_TO], subject, text })
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [env.EMAIL_TO], reply_to: env.REPLY_TO, subject, text })
   });
   if (!response.ok) return { status: "email_failed", providerStatus: response.status, providerBody: (await response.text()).slice(0, 300) };
   return { status: "email_accepted", provider: await response.json() };
