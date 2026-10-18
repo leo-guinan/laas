@@ -87,7 +87,7 @@ async function saveHandoff() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         businessUrl,
-        summary: transcriptLog.map(item => `${item.source.toUpperCase()}: ${item.text}`).join("\n\n"),
+        summary: `SIX P WORKING CONTEXT:\n${sessionStorage.getItem("laas_six_ps_context") || "Not available"}\n\nCONVERSATION:\n${transcriptLog.map(item => `${item.source.toUpperCase()}: ${item.text}`).join("\n\n")}`,
         transcript: JSON.stringify(transcriptLog)
       })
     });
@@ -139,6 +139,7 @@ function deliverProfile(profile) {
   if (!profile || scanDelivered) return;
   scanDelivered = true;
   sessionStorage.removeItem("laas_pending_scan");
+  sessionStorage.setItem("laas_six_ps_context", sixPsContext(profile));
   setScanStatus(`Public context ready: ${profile.usablePages || 0} pages read. Marvin is focusing first on the problems you are seeing.`);
   sendToMarvin(`The public website scan is ready. Treat this as source-bounded context, not verified business truth. Begin by asking what problems the owner is seeing now. Use the six Ps below only as working context, distinguish owner-reported facts from public material, and ask for correction.\n\n${sixPsContext(profile)}\n\nRAW PUBLIC CONTEXT:\n${compactProfile(profile)}`);
 }
