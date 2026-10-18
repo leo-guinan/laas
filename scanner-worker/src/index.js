@@ -61,6 +61,12 @@ async function verifyCalSignature(rawBody, signature, secret) {
   return expected === signature;
 }
 
+function agentFrameHtml(handoff, id, token) {
+  const context = JSON.stringify({ id, businessUrl: handoff.businessUrl || null, summary: handoff.summary || "", transcript: handoff.transcript || "" }).replaceAll("<", "\\u003c");
+  const frame = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AgentFrame — BuildHop feedback operator</title><style>:root{color-scheme:dark;font:15px/1.45 system-ui,sans-serif}body{margin:0;background:#111;color:#eee}header{padding:14px 18px;border-bottom:1px solid #333}main{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 62px)}aside{padding:18px;border-right:1px solid #333;overflow:auto}iframe{width:100%;height:100%;border:0;background:#fff}textarea{width:100%;box-sizing:border-box;min-height:180px;background:#1b1b1b;color:#fff;border:1px solid #555;border-radius:8px;padding:10px}label{display:block;margin:14px 0 6px;color:#aaa}button{margin-top:12px;padding:10px 14px;border:0;border-radius:8px;cursor:pointer}.status{margin-top:14px;padding:10px;background:#1c2b3c;border-left:3px solid #7db7ff}.warning{color:#ffc978}</style></head><body><header><strong>AgentFrame</strong> — internal BuildHop feedback operator</header><main><aside><p class="warning">Internal agent surface. Feedback must be labeled as agent-generated and grounded in the member handoff.</p><p id="source"></p><label for="draft">Agent-generated feedback</label><textarea id="draft" placeholder="Draft from the handoff, then submit through the BuildHop frame."></textarea><label for="vote">Internal vote</label><select id="vote"><option value="up">Up</option><option value="down">Down</option></select><button id="receipt">Record submission receipt</button><div class="status" id="status">Load the frame, submit through BuildHop, then record the receipt.</div></aside><iframe title="BuildHop feedback frame" src="https://buildhop.io/embed/feedback/fe9fdb91-5a6a-4d47-ab83-183ff46f0308?theme=light"></iframe></main><script>const ctx=CONTEXT;document.querySelector('#source').textContent=ctx.businessUrl?'Business: '+ctx.businessUrl:'No business URL';document.querySelector('#draft').value=ctx.summary;window.addEventListener('message',e=>{if(e.origin==='https://buildhop.io'&&e.data?.type==='buildhop:feedback-ready')document.querySelector('#status').textContent='BuildHop frame ready. The agent can operate the form.'});document.querySelector('#receipt').onclick=async()=>{const body={id:ctx.id,token:TOKEN,feedback:document.querySelector('#draft').value.slice(0,12000),vote:document.querySelector('#vote').value,agentGenerated:true,recordedAt:new Date().toISOString()};const r=await fetch('/agentframe/receipt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});document.querySelector('#status').textContent=r.ok?'Receipt recorded.':'Receipt failed.'};</script></body></html>`;
+  return frame.replace('CONTEXT', context).replace('TOKEN', JSON.stringify(token));
+}
+
 function randomToken() {
   return crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
 }
@@ -191,6 +197,7 @@ export class ScanJob {
     const token = request.headers.get("X-Scan-Token") || url.searchParams.get("token");
     const internal = this.env.WEBHOOK_SECRET && request.headers.get("X-Webhook-Secret") === this.env.WEBHOOK_SECRET;
     if (!internal && this.data?.token && token !== this.data.token) return json(request, { error: "Not found" }, 404);
+    if (!internal && this.data?.expiresAt && Date.now() > Date.parse(this.data.expiresAt)) return json(request, { error: "Expired" }, 410);
     if (request.method === "DELETE" && !internal) {
       await this.storage.deleteAll();
       this.data = null;
@@ -214,6 +221,11 @@ export class ScanJob {
       const result = await sendBookingBrief(this.env, this.data || {}, booking);
       await this.save({ ...this.data, email: result, emailAttemptedAt: new Date().toISOString() });
       return json(request, result, result.status === "email_failed" ? 502 : 200);
+    }
+    if (request.method === "POST" && url.pathname === "/receipt") {
+      const body = await request.json();
+      await this.save({ ...this.data, agentReceipt: { feedback: String(body.feedback || "").slice(0, 12000), vote: body.vote === "down" ? "down" : "up", agentGenerated: body.agentGenerated === true, recordedAt: body.recordedAt || new Date().toISOString() } });
+      return json(request, { ok: true, recorded: true });
     }
     return json(request, { error: "Not found" }, 404);
   }
@@ -242,10 +254,34 @@ export default {
         const id = randomToken();
         const token = randomToken();
         const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
-        const state = { id, token, kind: "handoff", status: "ready", createdAt: new Date().toISOString(), businessUrl: body.businessUrl || null, summary: String(body.summary || "").slice(0, 30000), transcript: String(body.transcript || "").slice(0, 30000) };
+        const state = { id, token, kind: "handoff", status: "ready", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), businessUrl: body.businessUrl || null, summary: String(body.summary || "").slice(0, 30000), transcript: String(body.transcript || "").slice(0, 30000) };
         await stub.fetch("https://job/", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": token }, body: JSON.stringify(state) });
         return json(request, { id, token, status: "ready" }, 201);
       } catch (error) { return json(request, { error: error.message }, 400); }
+    }
+    if (request.method === "GET" && url.pathname === "/agentframe") {
+      const id = url.searchParams.get("handoff");
+      const token = url.searchParams.get("token") || "";
+      if (!id || !token) return new Response("Not found", { status: 404 });
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+      const response = await stub.fetch(new Request("https://job/", { headers: { "X-Scan-Token": token } }));
+      if (!response.ok) return new Response("Not found", { status: 404 });
+      const handoff = await response.json();
+      if (handoff.kind !== "handoff") return new Response("Not found", { status: 404 });
+      return new Response(agentFrameHtml(handoff, id, token), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+    }
+    if (request.method === "GET" && url.pathname.startsWith("/handoff/")) {
+      const id = url.pathname.slice("/handoff/".length);
+      const token = url.searchParams.get("token") || "";
+      if (!/^[a-f0-9]+$/.test(id) || !token) return json(request, { error: "Not found" }, 404);
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+      return stub.fetch(new Request("https://job/", { headers: { "X-Scan-Token": token, "Origin": request.headers.get("Origin") || "" } }));
+    }
+    if (request.method === "POST" && url.pathname === "/agentframe/receipt") {
+      const body = await request.json();
+      if (!body.id || !body.token) return json(request, { error: "Not found" }, 404);
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(body.id));
+      return stub.fetch(new Request("https://job/receipt", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": body.token, "Origin": request.headers.get("Origin") || "" }, body: JSON.stringify(body) }));
     }
     if (request.method === "POST" && url.pathname === "/webhooks/calcom") {
       const rawBody = await request.text();
