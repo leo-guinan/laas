@@ -1,0 +1,11 @@
+name = "marvin-business-scanner"
+main = "src/index.js"
+compatibility_date = "2026-10-18"
+
+[[durable_objects.bindings]]
+name = "SCAN_JOBS"
+class_name = "ScanJob"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ScanJob"]

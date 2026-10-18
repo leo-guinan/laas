@@ -324,7 +324,7 @@ blockquote {
   background: var(--bg);
 }
 .conversation-intro { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
-.conversation-intro span, .conversation-status { color: var(--muted); font-size: 14px; }
+.conversation-intro span, .conversation-status, .site-scan-status { color: var(--muted); font-size: 14px; }
 .modality-choice { display: flex; gap: 12px; margin: 22px 0 14px; }
 .conversation-status { min-height: 22px; }
 .transcript {

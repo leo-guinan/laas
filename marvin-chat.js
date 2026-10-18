@@ -10,6 +10,7 @@ const textarea = composer?.querySelector("textarea");
 const sendButton = composer?.querySelector("button");
 const endButton = document.querySelector("[data-end-session]");
 const feedback = document.querySelector("[data-conversation-feedback]");
+const scanStatus = document.querySelector("[data-site-scan-status]");
 
 let conversation = null;
 let textSocket = null;
@@ -17,6 +18,8 @@ let activeModality = null;
 let pendingModality = null;
 let conversationStarted = false;
 let openingMessageSeen = false;
+let scanStarted = false;
+let scanDelivered = false;
 
 function setStatus(message) {
   if (status) status.textContent = message;
@@ -33,7 +36,7 @@ function appendMessage(source, text) {
 
 function isConfiguredOpening(text) {
   const normalized = String(text || "").toLowerCase();
-  return normalized.includes("what does your business do") && normalized.includes("harder than it should");
+  return normalized.includes("business website url") || (normalized.includes("what does your business do") && normalized.includes("harder than it should"));
 }
 
 function setComposerEnabled(enabled) {
@@ -43,6 +46,62 @@ function setComposerEnabled(enabled) {
 
 function track(name, props = {}) {
   window.fathom?.trackEvent(name, props);
+}
+
+function setScanStatus(message) {
+  if (scanStatus) scanStatus.textContent = message;
+}
+
+function normalizeBusinessUrl(raw) {
+  let url;
+  try { url = new URL(raw); } catch { return null; }
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null;
+  url.hash = "";
+  return url.href;
+}
+
+function sendToMarvin(text) {
+  if (textSocket?.readyState === WebSocket.OPEN) textSocket.send(JSON.stringify({ type: "user_message", text }));
+  else conversation?.sendUserMessage(text);
+}
+
+function compactProfile(profile) {
+  return profile.pages.slice(0, 12).map(page => [
+    `SOURCE: ${page.url}`,
+    page.title ? `TITLE: ${page.title}` : "",
+    page.description ? `DESCRIPTION: ${page.description}` : "",
+    page.headings?.length ? `HEADINGS: ${page.headings.join(" | ")}` : "",
+    `PUBLIC TEXT: ${(page.text || "").slice(0, 1400)}`
+  ].filter(Boolean).join("\n")).join("\n\n").slice(0, 24000);
+}
+
+async function scanBusinessSite(businessUrl) {
+  const endpoint = config.scannerEndpoint;
+  if (!endpoint || scanStarted) return;
+  scanStarted = true;
+  setScanStatus("Reading the public site in the background while Marvin asks about the pain.");
+  try {
+    const response = await fetch(`${endpoint}/scan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: businessUrl }) });
+    const job = await response.json();
+    if (!response.ok) throw new Error(job.error || "The site scan could not start.");
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, 4000));
+      const stateResponse = await fetch(`${endpoint}/scan/${job.id}?token=${encodeURIComponent(job.token)}`);
+      const state = await stateResponse.json();
+      if (state.status === "scanning") setScanStatus(`Reading public pages… ${state.pagesScanned || 0} scanned.`);
+      if (state.status === "complete") {
+        scanDelivered = true;
+        setScanStatus(`Public context ready: ${state.profile?.usablePages || 0} pages read. Marvin will focus next on what the site cannot tell us.`);
+        sendToMarvin(`The public website scan is ready. Treat this as source-bounded context, not verified business truth. Use it to avoid asking easily scrapable questions. Focus the next questions on the owner's current pain, recent concrete failures, recurring manual work, handoffs, constraints, delays, customer friction, and desired improvement. Ask for correction when needed.\n\n${compactProfile(state.profile)}`);
+        return;
+      }
+      if (state.status === "error") throw new Error(state.error || "The site scan failed.");
+    }
+    throw new Error("The scan is still running. Marvin can continue with the conversation while it finishes.");
+  } catch (error) {
+    console.error("Marvin site scan failed", error);
+    setScanStatus("The public scan could not finish. Marvin will continue with what you tell him directly.");
+  }
 }
 
 async function startSession(modality) {
@@ -69,8 +128,12 @@ async function startSession(modality) {
         track("Marvin Conversation Started");
       },
       onMessage: (message) => {
-        if (message?.source === "user") return;
         const text = message?.message || message?.text;
+        if (message?.source === "user") {
+          const businessUrl = normalizeBusinessUrl(text);
+          if (businessUrl && !scanStarted) scanBusinessSite(businessUrl);
+          return;
+        }
         if (!text) return;
         if (!openingMessageSeen && isConfiguredOpening(text)) {
           openingMessageSeen = true;
@@ -164,11 +227,14 @@ composer?.addEventListener("submit", (event) => {
   if (!text || activeModality !== "text" || (!conversation && !textSocket)) return;
   appendMessage("user", text);
   textarea.value = "";
-  if (textSocket?.readyState === WebSocket.OPEN) {
-    textSocket.send(JSON.stringify({ type: "user_message", text }));
-  } else {
-    conversation?.sendUserMessage(text);
+  const businessUrl = normalizeBusinessUrl(text);
+  if (businessUrl && !scanStarted) {
+    appendMessage("assistant", "I’ll read the public site while we talk. What pain are you experiencing in the business right now?");
+    sendToMarvin(`Business website URL: ${businessUrl}. Start by asking about the pain I am currently experiencing while the public site is scanned.`);
+    scanBusinessSite(businessUrl);
+    return;
   }
+  sendToMarvin(text);
 });
 
 endButton?.addEventListener("click", () => {
