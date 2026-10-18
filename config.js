@@ -1,4 +1,4 @@
 window.LAAS_CONFIG = {
-  // Paste your paid Cal.com booking URL here.
-  bookingUrl: "https://cal.com/ideanexus/leverage-calibration"
+  bookingUrl: "https://cal.com/ideanexus/leverage-calibration",
+  marvinAgentId: "agent_9101m57j73txe0aawxjxgtd40agd"
 };
