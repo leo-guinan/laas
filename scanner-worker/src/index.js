@@ -8,7 +8,7 @@ function corsHeaders(request) {
   return {
     "Access-Control-Allow-Origin": allowed.has(origin) ? origin : "https://www.leoasaservice.com",
     "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, X-Scan-Token",
+    "Access-Control-Allow-Headers": "Content-Type, X-Scan-Token, X-Webhook-Secret, X-Cal-Signature-256",
     "Vary": "Origin"
   };
 }
@@ -50,6 +50,15 @@ async function sendBookingBrief(env, handoff, booking) {
   });
   if (!response.ok) return { status: "email_failed", providerStatus: response.status, providerBody: (await response.text()).slice(0, 300) };
   return { status: "email_accepted", provider: await response.json() };
+}
+
+async function verifyCalSignature(rawBody, signature, secret) {
+  if (signature === "no-secret-provided") return true;
+  if (!secret || !signature) return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const digest = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+  const expected = [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, "0")).join("");
+  return expected === signature;
 }
 
 function randomToken() {
@@ -239,8 +248,12 @@ export default {
       } catch (error) { return json(request, { error: error.message }, 400); }
     }
     if (request.method === "POST" && url.pathname === "/webhooks/calcom") {
-      if (!env.WEBHOOK_SECRET || request.headers.get("X-Webhook-Secret") !== env.WEBHOOK_SECRET) return json(request, { error: "Unauthorized" }, 401);
-      const payload = await request.json();
+      const rawBody = await request.text();
+      const internal = env.WEBHOOK_SECRET && request.headers.get("X-Webhook-Secret") === env.WEBHOOK_SECRET;
+      const calSignature = request.headers.get("X-Cal-Signature-256");
+      if (!internal && !(await verifyCalSignature(rawBody, calSignature, env.WEBHOOK_SECRET))) return json(request, { error: "Unauthorized" }, 401);
+      let payload;
+      try { payload = JSON.parse(rawBody); } catch { return json(request, { error: "Invalid JSON" }, 400); }
       const id = handoffFromBooking(payload);
       if (!id) return json(request, { status: "no_handoff_id" });
       const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
