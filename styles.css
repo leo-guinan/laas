@@ -349,6 +349,11 @@ blockquote {
 .marvin-page .lead { max-width: 760px; font-size: 22px; line-height: 1.45; }
 .back-link { margin-top: 30px; font-size: 14px; }
 .back-link a { color: var(--muted); }
+.handoff-card, .privacy-note { margin-top: 42px; padding: 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.handoff-card h2 { margin-top: 0; font-size: 30px; }
+.handoff-card .button { margin-top: 18px; }
+.privacy-note { background: transparent; }
+.privacy-note p:last-child { color: var(--muted); font-size: 14px; }
 
 /* ---------- Business metrics ---------- */
 .metric-list { margin: 28px 0 0; padding: 0; list-style: none; }

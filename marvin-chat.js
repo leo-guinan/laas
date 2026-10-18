@@ -36,7 +36,7 @@ function appendMessage(source, text) {
 
 function isConfiguredOpening(text) {
   const normalized = String(text || "").toLowerCase();
-  return normalized.includes("business website url") || (normalized.includes("what does your business do") && normalized.includes("harder than it should"));
+  return normalized.includes("taking more work than it should") || normalized.includes("business website url") || (normalized.includes("what does your business do") && normalized.includes("harder than it should"));
 }
 
 function setComposerEnabled(enabled) {
@@ -247,6 +247,12 @@ document.querySelectorAll("[data-feedback]").forEach((button) => {
     track("Marvin Conversation Feedback");
     if (feedback) feedback.textContent = "Thanks. That feedback is part of how we improve the listening loop.";
   });
+});
+
+document.querySelector("[data-request-summary]")?.addEventListener("click", (event) => {
+  if (!conversation && !textSocket) return;
+  sendToMarvin("Please prepare a concise readback with: public business context; owner-reported pain; current work; possible improvement; confidence; unknowns; and the smallest next step. Ask me to correct it before treating it as accurate.");
+  event.currentTarget.textContent = "Summary requested — review Marvin's readback above.";
 });
 
 if (!agentId) {

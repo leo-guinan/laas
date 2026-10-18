@@ -1,15 +1,18 @@
 # Leo as a Service — canonical sales page
 
-A minimal, zero-build static sales page designed for GitHub Pages.
+A minimal, zero-build static sales page designed for GitHub Pages, with a native Marvin discovery page and a separately deployed public-site scanner.
 
 ## What is included
 
-- `index.html` — canonical sales page (agent eval calibration offer)
+- `index.html` — canonical business-leverage sales page
+- `talk-to-marvin.html` — text-first Marvin discovery with optional voice, site scan, handoff, and data boundaries
+- `proof.html` — public proof ledger separating outcomes, interim evidence, experiments, and unknowns
 - `meet-leo.html` — the human half: background, track record, proof in progress
 - `meet-marvin.html` — the agent half: Marvin's role, his evals, known failures
 - `styles.css` — simple editorial styling using system fonts only
-- `config.js` — paid Cal.com booking URL
+- `config.js` — paid Cal.com booking URL, public Marvin agent ID, and scanner endpoint
 - `script.js` — connects every CTA to the booking URL and preserves incoming query parameters
+- `scanner-worker/` — Cloudflare Worker + Durable Object source for bounded public website context scans
 - `vsl-script.md` — short script for the placeholder VSL
 
 ## Setup
@@ -24,7 +27,7 @@ No build step, framework, package manager, or external fonts are required.
 
 ## Design principles
 
-The offer is now evals for people who already run a named agent. Marvin is back, but only as proof: his evals and failures live on their own page. Creator APIs, BiPU and broader theory stay out of the sales flow.
+The offer starts with listening to a business problem. Marvin is the first point of contact; agent evaluations remain a specialist application of the broader business-leverage engagement. The proof page separates acquisition activity from verified business outcomes. Creator APIs, BiPU and broader theory stay out of the sales flow.
 
 The page only tries to answer:
 
