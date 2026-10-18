@@ -12,6 +12,7 @@ const endButton = document.querySelector("[data-end-session]");
 const feedback = document.querySelector("[data-conversation-feedback]");
 const scanStatus = document.querySelector("[data-site-scan-status]");
 const saveHandoffButton = document.querySelector("[data-save-handoff]");
+const memberReturn = document.querySelector("[data-member-return]");
 
 let conversation = null;
 let textSocket = null;
@@ -194,6 +195,7 @@ async function startSession(modality) {
         setComposerEnabled(false);
         if (endButton) endButton.hidden = true;
         if (feedback) feedback.hidden = false;
+        if (memberReturn && new URLSearchParams(window.location.search).get("member")) memberReturn.hidden = false;
         if (pendingModality) {
           const nextModality = pendingModality;
           pendingModality = null;
@@ -240,6 +242,7 @@ function startTextSession() {
     setComposerEnabled(false);
     if (endButton) endButton.hidden = true;
     if (feedback) feedback.hidden = false;
+    if (memberReturn && new URLSearchParams(window.location.search).get("member")) memberReturn.hidden = false;
     if (pendingModality) {
       const nextModality = pendingModality;
       pendingModality = null;

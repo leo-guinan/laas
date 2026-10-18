@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A guided Marvin session for BuildHop members." />
+  <title>BuildHop member path — Leo as a Service</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.usefathom.com/script.js" data-site="XERIAWTA" defer></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site"><div class="wrap"><a class="brand" href="index.html">Leo as a Service</a><div class="links"><a href="index.html">Home</a><a href="talk-to-marvin.html">Talk to Marvin</a><a href="proof.html">Proof</a></div></div></nav>
+
+  <main>
+    <section class="section marvin-page">
+      <div class="wrap narrow">
+        <p class="eyebrow">BuildHop member path</p>
+        <h1>Use the work. Then tell us where it missed.</h1>
+        <p class="lead">This guided path asks you to share a public site, check whether Marvin’s reading felt accurate, try the conversation, and leave one more piece of feedback before booking.</p>
+
+        <div class="handoff-card member-stage" data-stage="code">
+          <p class="eyebrow">Step 1</p><h2>Enter your member code</h2>
+          <p>Use the code shared with BuildHop members. The booking offer stays locked until the feedback path is complete.</p>
+          <form data-code-form><label for="member-code">Member code</label><input id="member-code" autocomplete="off" required placeholder="BUILDHOP-MARVIN" /><button class="button" type="submit">Start the member path</button><p class="micro" data-code-status></p></form>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="site" hidden>
+          <p class="eyebrow">Step 2</p><h2>Let Marvin read the public site</h2>
+          <p>Only public pages are read. The scan is source-labeled context, not a verified business profile.</p>
+          <form data-site-form><label for="member-site">Business website</label><input id="member-site" type="url" required placeholder="https://example.com" /><button class="button" type="submit">Scan my site</button><p class="micro" data-site-status></p></form>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="reflection" hidden>
+          <p class="eyebrow">Step 3</p><h2>Did the reading see you correctly?</h2>
+          <p data-profile-summary></p>
+          <form data-reflection-form><label for="reflection">What did Marvin get right, miss, or make too generic?</label><textarea id="reflection" rows="5" required></textarea><button class="button" type="submit">Record my correction</button><p class="micro" data-reflection-status></p></form>
+          <p class="micro">The BuildHop feedback widget is available on this page. Submit there too; this short correction gives us the context to interpret it.</p>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="widget" hidden>
+          <p class="eyebrow">Step 4</p><h2>Leave BuildHop feedback</h2>
+          <p>Open the Feedback control, submit your feedback, then confirm below. The widget does not expose a submission callback to this page, so the confirmation is explicit rather than pretending we verified an event we cannot read.</p>
+          <button class="button" type="button" data-widget-confirm>I submitted BuildHop feedback</button>
+          <p class="micro" data-widget-status></p>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="marvin" hidden>
+          <p class="eyebrow">Step 5</p><h2>Now talk to Marvin</h2>
+          <p>Your site correction is retained in this browser for the guided path. Continue to Marvin, then return here for the final time-value question.</p>
+          <a class="button" data-marvin-link href="talk-to-marvin.html?member=buildhop">Talk to Marvin</a>
+          <button class="text-link" type="button" data-marvin-done>I finished the Marvin conversation</button>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="time" hidden>
+          <p class="eyebrow">Step 6</p><h2>Was that time well spent?</h2>
+          <form data-time-form><label for="time-feedback">What was useful, what dragged, and what should change?</label><textarea id="time-feedback" rows="5" required></textarea><button class="button" type="submit">Save feedback and unlock booking</button><p class="micro" data-time-status></p></form>
+        </div>
+
+        <div class="handoff-card member-stage" data-stage="booking" hidden>
+          <p class="eyebrow">Member booking unlocked</p><h2>Your feedback is the price of entry.</h2>
+          <p>The member code has been accepted and both feedback checkpoints are recorded in this browser. The booking link carries the member offer reference.</p>
+          <a class="button" data-booking-link href="https://cal.com/ideanexus/feedback-session?promo=BUILDHOP-MARVIN">Book the feedback session</a>
+          <p class="micro">Offer code: BUILDHOP-MARVIN</p>
+        </div>
+
+        <p class="back-link"><a href="index.html">← Back to Leo as a Service</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script async src="https://buildhop.io/feedback-widget.js" data-launch-id="fe9fdb91-5a6a-4d47-ab83-183ff46f0308" data-theme="light"></script>
+  <script>
+    (() => {
+      const KEY = "laas_buildhop_member_v1";
+      const CODE = "BUILDHOP-MARVIN";
+      const scanner = "https://marvin-business-scanner.leo-guinan.workers.dev";
+      const state = JSON.parse(sessionStorage.getItem(KEY) || "{}");
+      const stages = [...document.querySelectorAll("[data-stage]")];
+      const show = name => stages.forEach(el => { el.hidden = el.dataset.stage !== name; });
+      const save = () => sessionStorage.setItem(KEY, JSON.stringify(state));
+      const validUrl = raw => { try { const u = new URL(raw); if (!["http:","https:"].includes(u.protocol) || u.username || u.password) return null; u.hash = ""; return u.href; } catch { return null; } };
+      const profileText = profile => (profile.pages || []).slice(0, 5).map(p => `${p.title || p.url}: ${p.url}`).join(" · ");
+      if (state.codeAccepted && !state.timeFeedback) show(state.widgetSubmitted ? "marvin" : state.reflection ? "widget" : state.profile ? "reflection" : "site");
+      if (state.timeFeedback) show("booking");
+
+      document.querySelector("[data-code-form]").addEventListener("submit", e => { e.preventDefault(); const value = document.querySelector("#member-code").value.trim().toUpperCase(); if (value !== CODE) { document.querySelector("[data-code-status]").textContent = "That code is not recognized."; return; } state.codeAccepted = true; save(); show("site"); });
+      document.querySelector("[data-site-form]").addEventListener("submit", async e => { e.preventDefault(); const url = validUrl(document.querySelector("#member-site").value.trim()); const status = document.querySelector("[data-site-status]"); if (!url) { status.textContent = "Enter a complete public https:// URL."; return; } status.textContent = "Reading public pages…"; try { const r = await fetch(`${scanner}/scan`, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url})}); const job = await r.json(); if (!r.ok) throw Error(job.error || "The scan could not start."); for (let i=0;i<90;i++) { await new Promise(x=>setTimeout(x,2500)); const s = await fetch(`${scanner}/scan/${job.id}?token=${encodeURIComponent(job.token)}`).then(x=>x.json()); if (s.status === "complete") { state.businessUrl=url; state.profile=s.profile; save(); document.querySelector("[data-profile-summary]").textContent = `I found ${s.profile.usablePages || 0} usable public pages: ${profileText(s.profile)}. Now correct the reading in your own words.`; show("reflection"); return; } if (s.status === "error") throw Error(s.error || "The scan failed."); status.textContent = `Reading public pages… ${s.pagesScanned || 0} scanned.`; } throw Error("The scan is still running; try again shortly."); } catch (err) { status.textContent = err.message; } });
+      document.querySelector("[data-reflection-form]").addEventListener("submit", e => { e.preventDefault(); const text=document.querySelector("#reflection").value.trim(); if (!text) return; state.reflection=text; state.reflectionSignal=text.length >= 40 ? "up" : "down"; save(); document.querySelector("[data-reflection-status]").textContent="Correction recorded."; show("widget"); });
+      document.querySelector("[data-widget-confirm]").addEventListener("click", () => { state.widgetSubmitted = true; state.widgetSubmittedAt = new Date().toISOString(); save(); document.querySelector("[data-widget-status]").textContent="Feedback checkpoint recorded."; show("marvin"); });
+      document.querySelector("[data-marvin-link]").href = `talk-to-marvin.html?member=buildhop&return=buildhop-members.html`;
+      document.querySelector("[data-marvin-done]").addEventListener("click", () => { state.marvinDone = true; save(); show("time"); });
+      document.querySelector("[data-time-form]").addEventListener("submit", e => { e.preventDefault(); const text=document.querySelector("#time-feedback").value.trim(); if (!text) return; state.timeFeedback=text; state.timeSignal=text.length >= 40 ? "up" : "down"; save(); show("booking"); });
+    })();
+  </script>
+</body>
+</html>
