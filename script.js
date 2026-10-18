@@ -1,10 +1,9 @@
 (() => {
   const cfg = window.LAAS_CONFIG || {};
-  const bookingUrl = cfg.bookingUrl || "#";
+  const sourceParams = new URLSearchParams(window.location.search);
+  const bookingUrl = sourceParams.get("flow") === "paid" ? (cfg.paidBookingUrl || cfg.bookingUrl || "#") : (cfg.bookingUrl || "#");
   const experiment = "laas_three_way_v1";
   const variant = "sales";
-
-  const sourceParams = new URLSearchParams(window.location.search);
 
   function withParams(url) {
     if (!url || url === "#") return "#";

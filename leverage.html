@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Start a measured Leo as a Service improvement engagement." />
+  <title>Start the leverage flow — Leo as a Service</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site"><div class="wrap"><a class="brand" href="index.html">Leo as a Service</a><div class="links"><a href="index.html">Home</a><a href="talk-to-marvin.html">Talk to Marvin</a><a href="proof.html">Proof</a></div></div></nav>
+  <main>
+    <section class="section marvin-page">
+      <div class="wrap narrow">
+        <p class="eyebrow">Start the measured improvement</p>
+        <h1>Give Marvin the public context first.</h1>
+        <p class="lead">Enter your business URL. We will read public pages in the background, then start the conversation with the problems you are seeing now. The site is context; your experience is the lead signal.</p>
+        <div class="handoff-card">
+          <form data-leverage-form>
+            <label for="leverage-site">Business website</label>
+            <input id="leverage-site" type="url" required placeholder="https://example.com" autocomplete="url" />
+            <button class="button" type="submit">Start with my business context</button>
+            <p class="micro" data-leverage-status></p>
+          </form>
+        </div>
+        <div class="privacy-note">
+          <p class="eyebrow">What happens next</p>
+          <p>The scan is limited to public same-origin pages and preserves source URLs. Marvin begins by asking what problems you are seeing. As the conversation develops, the public material is organized into People, Positioning, Promise, Proof, Priority, and Process. Those are working context, not scores or verified outcomes.</p>
+        </div>
+        <p class="back-link"><a href="index.html">← Back to Leo as a Service</a></p>
+      </div>
+    </section>
+  </main>
+  <script src="config.js"></script>
+  <script>
+    (() => {
+      const form = document.querySelector('[data-leverage-form]');
+      const status = document.querySelector('[data-leverage-status]');
+      const endpoint = window.LAAS_CONFIG?.scannerEndpoint;
+      const validUrl = raw => { try { const u = new URL(raw); if (!["http:","https:"].includes(u.protocol) || u.username || u.password) return null; u.hash = ""; return u.href; } catch { return null; } };
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const businessUrl = validUrl(document.querySelector('#leverage-site').value.trim());
+        if (!businessUrl) { status.textContent = 'Enter a complete public https:// URL.'; return; }
+        status.textContent = 'Starting the public scan. Marvin will ask about the problems while it runs…';
+        try {
+          const response = await fetch(`${endpoint}/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: businessUrl }) });
+          const job = await response.json();
+          if (!response.ok) throw new Error(job.error || 'The scan could not start.');
+          sessionStorage.setItem('laas_pending_scan', JSON.stringify({ ...job, businessUrl, startedAt: new Date().toISOString() }));
+          window.location.href = 'talk-to-marvin.html?flow=paid';
+        } catch (error) { status.textContent = error.message; }
+      });
+    })();
+  </script>
+</body>
+</html>

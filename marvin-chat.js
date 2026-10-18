@@ -24,6 +24,9 @@ let scanStarted = false;
 let scanDelivered = false;
 let businessUrl = null;
 const transcriptLog = [];
+let pendingScan = null;
+try { pendingScan = JSON.parse(sessionStorage.getItem("laas_pending_scan") || "null"); } catch { pendingScan = null; }
+if (pendingScan?.businessUrl) businessUrl = pendingScan.businessUrl;
 
 function setStatus(message) {
   if (status) status.textContent = message;
@@ -117,6 +120,48 @@ function compactProfile(profile) {
   ].filter(Boolean).join("\n")).join("\n\n").slice(0, 24000);
 }
 
+function sixPsContext(profile) {
+  const rules = {
+    People: /customer|client|audience|buyer|user|member|founder|team|operator/i,
+    Positioning: /different|alternative|speciali[sz]|for .*(?:who|that)|category|competitor/i,
+    Promise: /help|enable|deliver|outcome|result|improve|reduce|increase|save|make/i,
+    Proof: /case stud|testimonial|evidence|result|client|work|research|data|example/i,
+    Priority: /now|today|urgent|problem|pain|challenge|need|risk|deadline/i,
+    Process: /how|step|start|book|contact|learn|apply|schedule|process/i
+  };
+  return Object.entries(rules).map(([name, rule]) => {
+    const matches = (profile.pages || []).filter(page => rule.test(`${page.title || ""} ${page.description || ""} ${page.text || ""}`)).slice(0, 2);
+    return `${name}: ${matches.length ? matches.map(page => `SOURCE ${page.url}\n${(page.text || page.description || page.title || "").slice(0, 650)}`).join("\n") : "No clear public signal found; ask the owner."}`;
+  }).join("\n\n");
+}
+
+function deliverProfile(profile) {
+  if (!profile || scanDelivered) return;
+  scanDelivered = true;
+  sessionStorage.removeItem("laas_pending_scan");
+  setScanStatus(`Public context ready: ${profile.usablePages || 0} pages read. Marvin is focusing first on the problems you are seeing.`);
+  sendToMarvin(`The public website scan is ready. Treat this as source-bounded context, not verified business truth. Begin by asking what problems the owner is seeing now. Use the six Ps below only as working context, distinguish owner-reported facts from public material, and ask for correction.\n\n${sixPsContext(profile)}\n\nRAW PUBLIC CONTEXT:\n${compactProfile(profile)}`);
+}
+
+async function pollPendingScan() {
+  if (!pendingScan || !config.scannerEndpoint || scanDelivered) return;
+  scanStarted = true;
+  setScanStatus("Reading the public site in the background while Marvin asks what problems you are seeing.");
+  try {
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, 3500));
+      const response = await fetch(`${config.scannerEndpoint}/scan/${pendingScan.id}?token=${encodeURIComponent(pendingScan.token)}`);
+      const state = await response.json();
+      if (state.status === "scanning") setScanStatus(`Reading public pages in the background… ${state.pagesScanned || 0} scanned.`);
+      if (state.status === "complete") { deliverProfile(state.profile); return; }
+      if (state.status === "error") throw new Error(state.error || "The site scan failed.");
+    }
+  } catch (error) {
+    console.error("Pending leverage scan failed", error);
+    setScanStatus("The public scan could not finish. Marvin will continue with what you tell him directly.");
+  }
+}
+
 async function scanBusinessSite(businessUrl) {
   const endpoint = config.scannerEndpoint;
   if (!endpoint || scanStarted) return;
@@ -132,9 +177,7 @@ async function scanBusinessSite(businessUrl) {
       const state = await stateResponse.json();
       if (state.status === "scanning") setScanStatus(`Reading public pages… ${state.pagesScanned || 0} scanned.`);
       if (state.status === "complete") {
-        scanDelivered = true;
-        setScanStatus(`Public context ready: ${state.profile?.usablePages || 0} pages read. Marvin will focus next on what the site cannot tell us.`);
-        sendToMarvin(`The public website scan is ready. Treat this as source-bounded context, not verified business truth. Use it to avoid asking easily scrapable questions. Focus the next questions on the owner's current pain, recent concrete failures, recurring manual work, handoffs, constraints, delays, customer friction, and desired improvement. Ask for correction when needed.\n\n${compactProfile(state.profile)}`);
+        deliverProfile(state.profile);
         return;
       }
       if (state.status === "error") throw new Error(state.error || "The site scan failed.");
@@ -168,6 +211,7 @@ async function startSession(modality) {
         setComposerEnabled(modality === "text");
         if (endButton) endButton.hidden = false;
         track("Marvin Conversation Started");
+        pollPendingScan();
       },
       onMessage: (message) => {
         const text = message?.message || message?.text;
@@ -221,6 +265,7 @@ function startTextSession() {
     setComposerEnabled(true);
     if (endButton) endButton.hidden = false;
     track("Marvin Conversation Started");
+    pollPendingScan();
   });
   textSocket.addEventListener("message", (event) => {
     let payload;
