@@ -21,7 +21,7 @@
         <div class="handoff-card member-stage" data-stage="code">
           <p class="eyebrow">Step 1</p><h2>Enter your member code</h2>
           <p>Use the code shared with BuildHop members. The booking offer stays locked until the feedback path is complete.</p>
-          <form data-code-form><label for="member-code">Member code</label><input id="member-code" autocomplete="off" required placeholder="BUILDHOP-MARVIN" /><button class="button" type="submit">Start the member path</button><p class="micro" data-code-status></p></form>
+          <form data-code-form><label for="member-code">Member code</label><input id="member-code" autocomplete="off" required placeholder="BUILDHOPFREE" /><button class="button" type="submit">Start the member path</button><p class="micro" data-code-status></p></form>
         </div>
 
         <div class="handoff-card member-stage" data-stage="site" hidden>
@@ -59,8 +59,8 @@
         <div class="handoff-card member-stage" data-stage="booking" hidden>
           <p class="eyebrow">Member booking unlocked</p><h2>Your feedback is the price of entry.</h2>
           <p>The member code has been accepted and both feedback checkpoints are recorded in this browser. The booking link carries the member offer reference.</p>
-          <a class="button" data-booking-link href="https://cal.com/ideanexus/feedback-session?promo=BUILDHOP-MARVIN">Book the feedback session</a>
-          <p class="micro">Offer code: BUILDHOP-MARVIN</p>
+          <a class="button" data-booking-link href="https://cal.com/ideanexus/feedback-session?promo=BUILDHOPFREE&member_path=buildhop">Book the feedback session</a>
+          <p class="micro">Offer code: BUILDHOPFREE</p>
         </div>
 
         <p class="back-link"><a href="index.html">← Back to Leo as a Service</a></p>
@@ -72,7 +72,7 @@
   <script>
     (() => {
       const KEY = "laas_buildhop_member_v1";
-      const CODE = "BUILDHOP-MARVIN";
+      const CODE = "BUILDHOPFREE";
       const scanner = "https://marvin-business-scanner.leo-guinan.workers.dev";
       const state = JSON.parse(sessionStorage.getItem(KEY) || "{}");
       const stages = [...document.querySelectorAll("[data-stage]")];
@@ -80,7 +80,7 @@
       const save = () => sessionStorage.setItem(KEY, JSON.stringify(state));
       const validUrl = raw => { try { const u = new URL(raw); if (!["http:","https:"].includes(u.protocol) || u.username || u.password) return null; u.hash = ""; return u.href; } catch { return null; } };
       const profileText = profile => (profile.pages || []).slice(0, 5).map(p => `${p.title || p.url}: ${p.url}`).join(" · ");
-      if (state.codeAccepted && !state.timeFeedback) show(state.widgetSubmitted ? "marvin" : state.reflection ? "widget" : state.profile ? "reflection" : "site");
+      if (state.codeAccepted && !state.timeFeedback) show(state.marvinDone ? "time" : state.widgetSubmitted ? "marvin" : state.reflection ? "widget" : state.profile ? "reflection" : "site");
       if (state.timeFeedback) show("booking");
 
       document.querySelector("[data-code-form]").addEventListener("submit", e => { e.preventDefault(); const value = document.querySelector("#member-code").value.trim().toUpperCase(); if (value !== CODE) { document.querySelector("[data-code-status]").textContent = "That code is not recognized."; return; } state.codeAccepted = true; save(); show("site"); });
