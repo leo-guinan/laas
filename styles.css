@@ -345,6 +345,10 @@ blockquote {
 .text-link { margin-top: 12px; padding: 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
 .conversation-feedback { display: flex; gap: 12px; align-items: center; margin-top: 16px; font-size: 14px; }
 .conversation-feedback button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--paper); color: var(--text); cursor: pointer; }
+.marvin-page { padding-top: 72px; }
+.marvin-page .lead { max-width: 760px; font-size: 22px; line-height: 1.45; }
+.back-link { margin-top: 30px; font-size: 14px; }
+.back-link a { color: var(--muted); }
 
 /* ---------- Business metrics ---------- */
 .metric-list { margin: 28px 0 0; padding: 0; list-style: none; }

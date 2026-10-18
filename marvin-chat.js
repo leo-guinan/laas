@@ -14,6 +14,7 @@ const feedback = document.querySelector("[data-conversation-feedback]");
 let conversation = null;
 let textSocket = null;
 let activeModality = null;
+let pendingModality = null;
 let conversationStarted = false;
 let openingMessageSeen = false;
 
@@ -45,9 +46,9 @@ function track(name, props = {}) {
 }
 
 async function startSession(modality) {
-  if (!agentId || conversation) return;
+  if (!agentId || conversation || textSocket) return;
   activeModality = modality;
-  choice?.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+  choice?.querySelectorAll("[data-start-modality]").forEach((button) => { button.disabled = true; });
   setStatus(modality === "voice" ? "Connecting voice… allow microphone access when asked." : "Connecting text chat…");
   track("Marvin Modality Selected");
 
@@ -88,6 +89,11 @@ async function startSession(modality) {
         setComposerEnabled(false);
         if (endButton) endButton.hidden = true;
         if (feedback) feedback.hidden = false;
+        if (pendingModality) {
+          const nextModality = pendingModality;
+          pendingModality = null;
+          setTimeout(() => startSession(nextModality), 250);
+        }
       }
     });
   } catch (error) {
@@ -129,11 +135,27 @@ function startTextSession() {
     setComposerEnabled(false);
     if (endButton) endButton.hidden = true;
     if (feedback) feedback.hidden = false;
+    if (pendingModality) {
+      const nextModality = pendingModality;
+      pendingModality = null;
+      setTimeout(() => startSession(nextModality), 250);
+    }
   });
+}
+
+function switchModality(modality) {
+  if (modality === activeModality) return;
+  pendingModality = modality;
+  if (textSocket) textSocket.close();
+  if (conversation) conversation.endSession();
 }
 
 document.querySelectorAll("[data-start-modality]").forEach((button) => {
   button.addEventListener("click", () => startSession(button.dataset.startModality));
+});
+
+document.querySelectorAll("[data-switch-modality]").forEach((button) => {
+  button.addEventListener("click", () => switchModality(button.dataset.switchModality));
 });
 
 composer?.addEventListener("submit", (event) => {
@@ -165,4 +187,8 @@ if (!agentId) {
   setStatus("Marvin is not configured yet. Use the paid engagement below while we finish the free conversation.");
 } else if (!conversationStarted) {
   setStatus("Choose a modality to begin.");
+}
+
+if (document.querySelector("[data-auto-start-modality]")) {
+  startSession(document.querySelector("[data-auto-start-modality]").dataset.autoStartModality);
 }

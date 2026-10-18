@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Talk to Marvin about the work your business wants to make easier." />
+  <title>Talk to Marvin — Leo as a Service</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.usefathom.com/script.js" data-site="XERIAWTA" defer></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site">
+    <div class="wrap">
+      <a class="brand" href="index.html">Leo as a Service</a>
+      <div class="links">
+        <a href="index.html">Home</a>
+        <a href="meet-marvin.html">Agent evals</a>
+        <a href="https://dashboard.leoasaservice.com/">Proof</a>
+        <a href="meet-leo.html">Meet Leo</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <section class="section marvin-page">
+      <div class="wrap narrow">
+        <p class="eyebrow">Talk to Marvin</p>
+        <h1>Marvin starts by listening.</h1>
+        <p class="lead">Tell him what your business does, what frustrates you, and what you'd like to make easier. He'll help map the work before anyone suggests a solution.</p>
+
+        <div class="conversation-shell" aria-label="Conversation with Marvin" data-auto-start-modality="text">
+          <div class="conversation-intro">
+            <strong>Text chat</strong>
+            <span>Voice is available as an alternate mode.</span>
+          </div>
+          <div class="modality-choice" data-modality-choice>
+            <button class="button secondary-button" type="button" data-switch-modality="voice">Switch to voice</button>
+          </div>
+          <div class="conversation-status" data-conversation-status>Connecting text chat…</div>
+          <div class="transcript" data-transcript aria-live="polite">
+            <div class="message assistant">Hi. I'm Marvin. I'm here to understand the work you're actually doing before suggesting anything. What does your business do, and what feels harder than it should right now?</div>
+          </div>
+          <form class="composer" data-composer>
+            <label class="sr-only" for="marvin-message">Message Marvin</label>
+            <textarea id="marvin-message" rows="2" placeholder="Tell Marvin what your business does…" disabled></textarea>
+            <button class="button" type="submit" disabled>Send</button>
+          </form>
+          <button class="text-link" type="button" data-end-session hidden>End conversation</button>
+          <div class="conversation-feedback" data-conversation-feedback hidden>
+            <span>Was this useful?</span>
+            <button type="button" data-feedback="useful">Yes</button>
+            <button type="button" data-feedback="not-yet">Not yet</button>
+          </div>
+          <p class="micro">Marvin does not take external actions or make promises. The next step is a suggestion, not a commitment.</p>
+        </div>
+
+        <p class="back-link"><a href="index.html">← Back to Leo as a Service</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script type="module" src="marvin-chat.js"></script>
+</body>
+</html>
