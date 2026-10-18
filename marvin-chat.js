@@ -68,6 +68,7 @@ function updateBookingLink(id) {
   document.querySelectorAll("[data-cta]").forEach((link) => {
     const url = new URL(link.href, window.location.href);
     url.searchParams.set("marvin_handoff_id", id);
+    url.searchParams.set("metadata[marvin_handoff_id]", id);
     link.href = url.href;
   });
 }
