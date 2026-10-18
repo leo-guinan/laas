@@ -11,6 +11,7 @@ const sendButton = composer?.querySelector("button");
 const endButton = document.querySelector("[data-end-session]");
 const feedback = document.querySelector("[data-conversation-feedback]");
 const scanStatus = document.querySelector("[data-site-scan-status]");
+const saveHandoffButton = document.querySelector("[data-save-handoff]");
 
 let conversation = null;
 let textSocket = null;
@@ -20,6 +21,8 @@ let conversationStarted = false;
 let openingMessageSeen = false;
 let scanStarted = false;
 let scanDelivered = false;
+let businessUrl = null;
+const transcriptLog = [];
 
 function setStatus(message) {
   if (status) status.textContent = message;
@@ -27,6 +30,7 @@ function setStatus(message) {
 
 function appendMessage(source, text) {
   if (!text || !transcript) return;
+  transcriptLog.push({ source, text: String(text).slice(0, 8000), at: new Date().toISOString() });
   const bubble = document.createElement("div");
   bubble.className = `message ${source === "user" ? "user" : "assistant"}`;
   bubble.textContent = text;
@@ -58,6 +62,42 @@ function normalizeBusinessUrl(raw) {
   if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return null;
   url.hash = "";
   return url.href;
+}
+
+function updateBookingLink(id) {
+  document.querySelectorAll("[data-cta]").forEach((link) => {
+    const url = new URL(link.href, window.location.href);
+    url.searchParams.set("marvin_handoff_id", id);
+    link.href = url.href;
+  });
+}
+
+async function saveHandoff() {
+  if (!config.scannerEndpoint || !transcriptLog.length) return;
+  saveHandoffButton?.setAttribute("disabled", "disabled");
+  if (saveHandoffButton) saveHandoffButton.textContent = "Saving private briefing…";
+  try {
+    const response = await fetch(`${config.scannerEndpoint}/handoff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessUrl,
+        summary: transcriptLog.map(item => `${item.source.toUpperCase()}: ${item.text}`).join("\n\n"),
+        transcript: JSON.stringify(transcriptLog)
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "The briefing could not be saved.");
+    localStorage.setItem("marvin_handoff_id", result.id);
+    localStorage.setItem("marvin_handoff_token", result.token);
+    updateBookingLink(result.id);
+    if (saveHandoffButton) saveHandoffButton.textContent = "Briefing saved for booking.";
+    setStatus("Private briefing saved. Your booking link now carries the handoff reference.");
+  } catch (error) {
+    console.error("Marvin handoff save failed", error);
+    if (saveHandoffButton) { saveHandoffButton.removeAttribute("disabled"); saveHandoffButton.textContent = "Retry saving this briefing"; }
+    setStatus("The briefing could not be saved yet. You can still continue the conversation.");
+  }
 }
 
 function sendToMarvin(text) {
@@ -130,8 +170,9 @@ async function startSession(modality) {
       onMessage: (message) => {
         const text = message?.message || message?.text;
         if (message?.source === "user") {
-          const businessUrl = normalizeBusinessUrl(text);
-          if (businessUrl && !scanStarted) scanBusinessSite(businessUrl);
+          const detectedUrl = normalizeBusinessUrl(text);
+          if (detectedUrl && !scanStarted) { businessUrl = detectedUrl; scanBusinessSite(detectedUrl); }
+          if (text) appendMessage("user", text);
           return;
         }
         if (!text) return;
@@ -227,11 +268,12 @@ composer?.addEventListener("submit", (event) => {
   if (!text || activeModality !== "text" || (!conversation && !textSocket)) return;
   appendMessage("user", text);
   textarea.value = "";
-  const businessUrl = normalizeBusinessUrl(text);
-  if (businessUrl && !scanStarted) {
+  const detectedUrl = normalizeBusinessUrl(text);
+  if (detectedUrl) businessUrl = detectedUrl;
+  if (detectedUrl && !scanStarted) {
     appendMessage("assistant", "I’ll read the public site while we talk. What pain are you experiencing in the business right now?");
-    sendToMarvin(`Business website URL: ${businessUrl}. Start by asking about the pain I am currently experiencing while the public site is scanned.`);
-    scanBusinessSite(businessUrl);
+    sendToMarvin(`Business website URL: ${detectedUrl}. Start by asking about the pain I am currently experiencing while the public site is scanned.`);
+    scanBusinessSite(detectedUrl);
     return;
   }
   sendToMarvin(text);
@@ -253,7 +295,10 @@ document.querySelector("[data-request-summary]")?.addEventListener("click", (eve
   if (!conversation && !textSocket) return;
   sendToMarvin("Please prepare a concise readback with: public business context; owner-reported pain; current work; possible improvement; confidence; unknowns; and the smallest next step. Ask me to correct it before treating it as accurate.");
   event.currentTarget.textContent = "Summary requested — review Marvin's readback above.";
+  if (saveHandoffButton) saveHandoffButton.hidden = false;
 });
+
+saveHandoffButton?.addEventListener("click", saveHandoff);
 
 if (!agentId) {
   setStatus("Marvin is not configured yet. Use the paid engagement below while we finish the free conversation.");

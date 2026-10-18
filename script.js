@@ -13,6 +13,8 @@
       for (const [key, value] of sourceParams.entries()) {
         if (!target.searchParams.has(key)) target.searchParams.set(key, value);
       }
+      const savedHandoffId = localStorage.getItem("marvin_handoff_id");
+      if (savedHandoffId && !target.searchParams.has("marvin_handoff_id")) target.searchParams.set("marvin_handoff_id", savedHandoffId);
       target.searchParams.set("experiment", experiment);
       target.searchParams.set("landing_variant", variant);
       return target.toString();

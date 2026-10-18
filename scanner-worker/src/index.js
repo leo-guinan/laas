@@ -7,7 +7,7 @@ function corsHeaders(request) {
   const allowed = new Set(["https://www.leoasaservice.com", "https://leoasaservice.com", "http://127.0.0.1:8765", "http://localhost:8765"]);
   return {
     "Access-Control-Allow-Origin": allowed.has(origin) ? origin : "https://www.leoasaservice.com",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Scan-Token",
     "Vary": "Origin"
   };
@@ -18,6 +18,37 @@ function json(request, body, status = 200) {
     status,
     headers: { "Content-Type": "application/json; charset=utf-8", ...corsHeaders(request) }
   });
+}
+
+function handoffFromBooking(payload) {
+  const root = payload?.payload || payload || {};
+  const metadata = root.metadata || root.booking?.metadata || root.booking?.eventType?.metadata || {};
+  return metadata.handoff_id || metadata.marvin_handoff_id || root.handoff_id || root.marvin_handoff_id || null;
+}
+
+async function sendBookingBrief(env, handoff, booking) {
+  if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !env.EMAIL_TO) return { status: "email_not_configured" };
+  const attendee = booking?.attendees?.[0]?.email || booking?.attendee?.email || "unknown attendee";
+  const subject = `Marvin briefing for confirmed booking${booking?.uid ? ` ${booking.uid}` : ""}`;
+  const text = [
+    "A Cal.com booking was confirmed with a Marvin discovery handoff.",
+    "",
+    `Booking UID: ${booking?.uid || "unknown"}`,
+    `Attendee: ${attendee}`,
+    `Business URL: ${handoff.businessUrl || "not provided"}`,
+    "",
+    "Briefing / conversation transcript:",
+    handoff.summary || handoff.transcript || "No briefing was saved.",
+    "",
+    "This is a private briefing assembled from the visitor's conversation and public-site context. Verify it with the owner before treating it as fact."
+  ].join("\n");
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [env.EMAIL_TO], subject, text })
+  });
+  if (!response.ok) return { status: "email_failed", providerStatus: response.status, providerBody: (await response.text()).slice(0, 300) };
+  return { status: "email_accepted", provider: await response.json() };
 }
 
 function randomToken() {
@@ -148,7 +179,13 @@ export class ScanJob {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(request) });
     const token = request.headers.get("X-Scan-Token") || url.searchParams.get("token");
-    if (this.data?.token && token !== this.data.token) return json(request, { error: "Not found" }, 404);
+    const internal = this.env.WEBHOOK_SECRET && request.headers.get("X-Webhook-Secret") === this.env.WEBHOOK_SECRET;
+    if (!internal && this.data?.token && token !== this.data.token) return json(request, { error: "Not found" }, 404);
+    if (request.method === "DELETE" && !internal) {
+      await this.storage.deleteAll();
+      this.data = null;
+      return json(request, { ok: true });
+    }
     if (request.method === "GET") return json(request, this.data || { status: "unknown" });
     if (request.method === "POST" && url.pathname === "/") {
       const initial = await request.json();
@@ -161,6 +198,12 @@ export class ScanJob {
       try { await runScan(this.data, next => this.save(next)); }
       catch (error) { await this.save({ ...this.data, status: "error", error: error.message }); }
       return json(request, { ok: true });
+    }
+    if (internal && request.method === "POST" && url.pathname === "/email") {
+      const booking = await request.json();
+      const result = await sendBookingBrief(this.env, this.data || {}, booking);
+      await this.save({ ...this.data, email: result, emailAttemptedAt: new Date().toISOString() });
+      return json(request, result, result.status === "email_failed" ? 502 : 200);
     }
     return json(request, { error: "Not found" }, 404);
   }
@@ -182,6 +225,31 @@ export default {
         ctx.waitUntil(stub.fetch("https://job/run", { method: "POST", headers: { "X-Scan-Token": token } }));
         return json(request, { id, token, status: "queued" }, 202);
       } catch (error) { return json(request, { error: error.message }, 400); }
+    }
+    if (request.method === "POST" && url.pathname === "/handoff") {
+      try {
+        const body = await request.json();
+        const id = randomToken();
+        const token = randomToken();
+        const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+        const state = { id, token, kind: "handoff", status: "ready", createdAt: new Date().toISOString(), businessUrl: body.businessUrl || null, summary: String(body.summary || "").slice(0, 30000), transcript: String(body.transcript || "").slice(0, 30000) };
+        await stub.fetch("https://job/", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": token }, body: JSON.stringify(state) });
+        return json(request, { id, token, status: "ready" }, 201);
+      } catch (error) { return json(request, { error: error.message }, 400); }
+    }
+    if (request.method === "POST" && url.pathname === "/webhooks/calcom") {
+      if (!env.WEBHOOK_SECRET || request.headers.get("X-Webhook-Secret") !== env.WEBHOOK_SECRET) return json(request, { error: "Unauthorized" }, 401);
+      const payload = await request.json();
+      const id = handoffFromBooking(payload);
+      if (!id) return json(request, { status: "no_handoff_id" });
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+      return stub.fetch(new Request("https://job/email", { method: "POST", headers: { "Content-Type": "application/json", "X-Webhook-Secret": env.WEBHOOK_SECRET }, body: JSON.stringify(payload.payload || payload) }));
+    }
+    const handoffDelete = url.pathname.match(/^\/handoff\/([a-f0-9]+)$/);
+    if (request.method === "DELETE" && handoffDelete) {
+      const token = request.headers.get("X-Scan-Token") || url.searchParams.get("token") || "";
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(handoffDelete[1]));
+      return stub.fetch(new Request("https://job/", { method: "DELETE", headers: { "X-Scan-Token": token, "Origin": request.headers.get("Origin") || "" } }));
     }
     const match = url.pathname.match(/^\/scan\/([a-f0-9]+)$/);
     if (request.method === "GET" && match) {
