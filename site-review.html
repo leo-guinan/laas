@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="A source-bounded preview of how Marvin reads a public business website." />
+  <title>How well did Marvin read your site?</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.usefathom.com/script.js" data-site="XERIAWTA" defer></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site"><div class="wrap"><a class="brand" href="index.html">Leo as a Service</a><div class="links"><a href="proof.html">Proof</a><a href="talk-to-marvin.html">Talk to Marvin</a></div></div></nav>
+  <main>
+    <section class="section marvin-page">
+      <div class="wrap narrow">
+        <p class="eyebrow">A small experiment</p>
+        <h1>How well did Marvin read your site?</h1>
+        <p class="lead">Someone pointed Marvin at your public website. This is a first reading, not a report about your business. Tell us where it recognized you and where it missed.</p>
+
+        <div class="handoff-card review-stage" data-stage="start">
+          <p class="eyebrow">Public-site preview</p>
+          <h2>Read the working interpretation</h2>
+          <p>Marvin reads public pages only. Marketing language is not treated as verified performance, and anything private still has to come from you.</p>
+          <form data-start-form>
+            <label for="review-site">Website</label>
+            <input id="review-site" type="url" required placeholder="https://example.com" />
+            <button class="button" type="submit">Read my site</button>
+            <p class="micro" data-start-status></p>
+          </form>
+        </div>
+
+        <div class="handoff-card review-stage" data-stage="reading" hidden>
+          <p class="eyebrow">Reading public pages</p><h2>Marvin is looking for signal, not polish.</h2>
+          <p data-reading-status>Starting the bounded scan…</p>
+        </div>
+
+        <div class="handoff-card review-stage" data-stage="result" hidden>
+          <p class="eyebrow">Working reading</p><h2>What the site appears to say</h2>
+          <p class="micro" data-result-source></p>
+          <div class="review-grid" data-reading-grid></div>
+          <p class="micro">These are source-bounded hypotheses. A missing signal means “the public site did not make this clear,” not “the business does not have it.”</p>
+          <button class="button" type="button" data-show-feedback>Tell us where it landed</button>
+        </div>
+
+        <div class="handoff-card review-stage" data-stage="feedback" hidden>
+          <p class="eyebrow">Your correction is the useful part</p><h2>Did this recognize your business?</h2>
+          <form data-feedback-form>
+            <fieldset><legend>How close was the reading?</legend><label><input type="radio" name="recognition" value="accurate" required /> Mostly accurate</label><label><input type="radio" name="recognition" value="mixed" /> Partly accurate</label><label><input type="radio" name="recognition" value="off" /> Mostly off</label></fieldset>
+            <label for="correction">What did it get right, miss, or make too generic?</label>
+            <textarea id="correction" rows="6" required placeholder="One concrete correction is more useful than a rating alone."></textarea>
+            <fieldset><legend>Was this useful enough to continue?</legend><label><input type="radio" name="usefulness" value="yes" required /> Yes</label><label><input type="radio" name="usefulness" value="maybe" /> Maybe</label><label><input type="radio" name="usefulness" value="no" /> No</label></fieldset>
+            <label for="review-note">Anything else? <span class="micro">Optional</span></label>
+            <textarea id="review-note" rows="4" placeholder="How did this land as an unexpected outreach message?"></textarea>
+            <button class="button" type="submit">Send feedback</button>
+            <p class="micro" data-feedback-status></p>
+          </form>
+        </div>
+
+        <div class="handoff-card review-stage" data-stage="done" hidden>
+          <p class="eyebrow">Feedback recorded</p><h2>Thank you for correcting the machine.</h2>
+          <p>Your response was saved as feedback on this reading. It is not being presented as a testimonial or a verified business outcome.</p>
+          <p class="micro" data-receipt></p>
+        </div>
+        <p class="back-link"><a href="index.html">← Leo as a Service</a></p>
+      </div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const scanner = "https://marvin-business-scanner.leo-guinan.workers.dev";
+      const query = new URLSearchParams(location.search);
+      const stages = [...document.querySelectorAll("[data-stage]")];
+      const show = name => stages.forEach(el => { el.hidden = el.dataset.stage !== name; });
+      const validUrl = raw => { try { const u = new URL(raw); if (!["http:", "https:"].includes(u.protocol) || u.username || u.password) return null; u.hash = ""; return u.href; } catch { return null; } };
+      const rules = { People: /customer|client|audience|buyer|user|member|founder|team|operator/i, Positioning: /for |serves |help|platform|agency|studio|consult|software|product/i, Promise: /help|enable|make|build|grow|save|deliver|transform|support/i, Proof: /case stud|testimonial|client|result|review|trusted|portfolio|work with/i, Priority: /problem|challenge|need|focus|priority|book|contact|start|get started/i, Process: /how it works|process|step|method|approach|workflow|schedule|pricing/i };
+      const sixPs = profile => Object.entries(rules).map(([name, re]) => { const hits = (profile.pages || []).filter(p => re.test(`${p.title || ""} ${p.text || ""}`)); return { name, text: hits.length ? `Signal found across ${hits.length} public page${hits.length === 1 ? "" : "s"}. The reading needs your correction.` : "The public site did not make this clear." }; });
+      const esc = text => String(text).replace(/[&<>\"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      const siteInput = document.querySelector("#review-site");
+      const preset = validUrl(query.get("site") || ""); if (preset) siteInput.value = preset;
+      const campaign = query.get("source") || "outreach";
+      let state = { businessUrl: preset, campaign };
+      const render = profile => { document.querySelector("[data-result-source]").textContent = `${profile.usablePages || 0} usable public pages read from ${state.businessUrl}.`; document.querySelector("[data-reading-grid]").innerHTML = sixPs(profile).map(p => `<article class="handoff-card"><h3>${esc(p.name)}</h3><p>${esc(p.text)}</p></article>`).join(""); };
+      document.querySelector("[data-start-form]").addEventListener("submit", async event => { event.preventDefault(); const url = validUrl(siteInput.value.trim()); const status = document.querySelector("[data-start-status]"); if (!url) { status.textContent = "Enter a complete public https:// URL."; return; } state.businessUrl = url; show("reading"); const readingStatus = document.querySelector("[data-reading-status]"); try { const r = await fetch(`${scanner}/scan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }); const job = await r.json(); if (!r.ok) throw Error(job.error || "The scan could not start."); for (let i = 0; i < 90; i++) { await new Promise(resolve => setTimeout(resolve, 2500)); const s = await fetch(`${scanner}/scan/${job.id}?token=${encodeURIComponent(job.token)}`).then(response => response.json()); if (s.status === "complete") { state.profile = s.profile; render(s.profile); show("result"); return; } if (s.status === "error") throw Error(s.error || "The scan failed."); readingStatus.textContent = `Reading public pages… ${s.pagesScanned || 0} scanned.`; } throw Error("The scan is still running; please try again shortly."); } catch (error) { show("start"); status.textContent = error.message; } });
+      document.querySelector("[data-show-feedback]").addEventListener("click", async () => { const status = document.querySelector("[data-feedback-status]"); try { const reading = sixPs(state.profile).map(p => `${p.name}: ${p.text}`).join("\n"); const r = await fetch(`${scanner}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessUrl: state.businessUrl, source: campaign, scanId: state.profile.businessUrl, reading }) }); const review = await r.json(); if (!r.ok) throw Error(review.error || "The review could not start."); state.review = review; show("feedback"); } catch (error) { document.querySelector("[data-result-source]").textContent = error.message; } });
+      document.querySelector("[data-feedback-form]").addEventListener("submit", async event => { event.preventDefault(); const status = document.querySelector("[data-feedback-status]"); const body = { id: state.review.id, token: state.review.token, recognition: document.querySelector("input[name=recognition]:checked")?.value, correction: document.querySelector("#correction").value.trim(), usefulness: document.querySelector("input[name=usefulness]:checked")?.value, note: document.querySelector("#review-note").value.trim() }; status.textContent = "Saving feedback…"; try { const r = await fetch(`${scanner}/review/feedback`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const result = await r.json(); if (!r.ok) throw Error(result.error || "Feedback could not be saved."); document.querySelector("[data-receipt]").textContent = `Reference: ${result.reviewId.slice(0, 12)}.`; show("done"); } catch (error) { status.textContent = error.message; } });
+    })();
+  </script>
+</body>
+</html>

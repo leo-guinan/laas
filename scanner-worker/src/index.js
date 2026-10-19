@@ -227,6 +227,18 @@ export class ScanJob {
       await this.save({ ...this.data, agentReceipt: { feedback: String(body.feedback || "").slice(0, 12000), vote: body.vote === "down" ? "down" : "up", agentGenerated: body.agentGenerated === true, recordedAt: body.recordedAt || new Date().toISOString() } });
       return json(request, { ok: true, recorded: true });
     }
+    if (request.method === "POST" && url.pathname === "/feedback") {
+      const body = await request.json();
+      const review = {
+        recognition: ["accurate", "mixed", "off"].includes(body.recognition) ? body.recognition : "unknown",
+        correction: String(body.correction || "").slice(0, 12000),
+        usefulness: ["yes", "maybe", "no"].includes(body.usefulness) ? body.usefulness : "unknown",
+        note: String(body.note || "").slice(0, 6000),
+        submittedAt: new Date().toISOString()
+      };
+      await this.save({ ...this.data, review });
+      return json(request, { ok: true, recorded: true, reviewId: this.data.id });
+    }
     return json(request, { error: "Not found" }, 404);
   }
 }
@@ -259,6 +271,18 @@ export default {
         return json(request, { id, token, status: "ready" }, 201);
       } catch (error) { return json(request, { error: error.message }, 400); }
     }
+    if (request.method === "POST" && url.pathname === "/review") {
+      try {
+        const body = await request.json();
+        const root = validateUrl(body.businessUrl);
+        const id = randomToken();
+        const token = randomToken();
+        const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+        const state = { id, token, kind: "site-review", status: "ready", createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), businessUrl: root.href, source: String(body.source || "outreach").slice(0, 160), scanId: String(body.scanId || "").slice(0, 160), reading: String(body.reading || "").slice(0, 16000) };
+        await stub.fetch("https://job/", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": token }, body: JSON.stringify(state) });
+        return json(request, { id, token, status: "ready" }, 201);
+      } catch (error) { return json(request, { error: error.message }, 400); }
+    }
     if (request.method === "GET" && url.pathname === "/agentframe") {
       const id = url.searchParams.get("handoff");
       const token = url.searchParams.get("token") || "";
@@ -277,11 +301,24 @@ export default {
       const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
       return stub.fetch(new Request("https://job/", { headers: { "X-Scan-Token": token, "Origin": request.headers.get("Origin") || "" } }));
     }
+    if (request.method === "GET" && url.pathname.startsWith("/review/")) {
+      const id = url.pathname.slice("/review/".length);
+      const token = url.searchParams.get("token") || "";
+      if (!/^[a-f0-9]+$/.test(id) || !token) return json(request, { error: "Not found" }, 404);
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(id));
+      return stub.fetch(new Request("https://job/", { headers: { "X-Scan-Token": token, "Origin": request.headers.get("Origin") || "" } }));
+    }
     if (request.method === "POST" && url.pathname === "/agentframe/receipt") {
       const body = await request.json();
       if (!body.id || !body.token) return json(request, { error: "Not found" }, 404);
       const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(body.id));
       return stub.fetch(new Request("https://job/receipt", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": body.token, "Origin": request.headers.get("Origin") || "" }, body: JSON.stringify(body) }));
+    }
+    if (request.method === "POST" && url.pathname === "/review/feedback") {
+      const body = await request.json();
+      if (!body.id || !body.token) return json(request, { error: "Not found" }, 404);
+      const stub = env.SCAN_JOBS.get(env.SCAN_JOBS.idFromName(body.id));
+      return stub.fetch(new Request("https://job/feedback", { method: "POST", headers: { "Content-Type": "application/json", "X-Scan-Token": body.token, "Origin": request.headers.get("Origin") || "" }, body: JSON.stringify(body) }));
     }
     if (request.method === "POST" && url.pathname === "/webhooks/calcom") {
       const rawBody = await request.text();
