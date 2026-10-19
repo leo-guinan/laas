@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Create a seeded Marvin site-reading link for someone you know." />
+  <title>Create a Marvin site-reading link</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.usefathom.com/script.js" data-site="XERIAWTA" defer></script>
+</head>
+<body>
+  <nav class="site-nav" aria-label="Site"><div class="wrap"><a class="brand" href="index.html">Leo as a Service</a><div class="links"><a href="proof.html">Proof</a><a href="talk-to-marvin.html">Talk to Marvin</a></div></div></nav>
+  <main>
+    <section class="section marvin-page">
+      <div class="wrap narrow">
+        <p class="eyebrow">Testing form · referral seed</p>
+        <h1>Create a site-reading link for someone you know.</h1>
+        <p class="lead">Enter a public business website. Marvin will read it, show you the working interpretation, and give you a link you can send to the owner for correction.</p>
+
+        <div class="handoff-card" data-stage="form">
+          <h2>Start with a public URL</h2>
+          <form data-create-form>
+            <label for="business-url">Business website</label>
+            <input id="business-url" type="url" required placeholder="https://example.com" />
+            <label for="source-label">Your referral label <span class="micro">Optional</span></label>
+            <input id="source-label" autocomplete="off" placeholder="your-name or warm-intro" />
+            <p class="micro">This label is included in the generated link so we can distinguish early referral experiments. Do not put private notes or sensitive information here.</p>
+            <button class="button" type="submit">Read the site</button>
+            <p class="micro" data-form-status></p>
+          </form>
+        </div>
+
+        <div class="handoff-card" data-stage="scanning" hidden>
+          <p class="eyebrow">Bounded public scan</p><h2>Marvin is reading public pages.</h2>
+          <p data-scan-status>Starting…</p>
+          <p class="micro">Only public same-origin pages are read. This is context, not a verified business profile.</p>
+        </div>
+
+        <div class="handoff-card" data-stage="result" hidden>
+          <p class="eyebrow">Working interpretation</p><h2>Review it before you send it.</h2>
+          <p data-result-meta></p>
+          <div class="review-grid" data-result-grid></div>
+          <p class="micro">If the reading is interesting, send the link below. The recipient gets the same reading and can say where it was accurate, mixed, or off.</p>
+          <label for="share-link">Copy this seeded feedback link</label>
+          <input id="share-link" data-share-link readonly />
+          <div><button class="button" type="button" data-copy>Copy link</button> <a class="button" data-open href="#" target="_blank" rel="noopener">Open recipient view</a></div>
+          <p class="micro" data-copy-status></p>
+          <p class="micro"><a href="referral-studio.html">Create another link</a></p>
+        </div>
+
+        <p class="back-link"><a href="index.html">← Leo as a Service</a></p>
+      </div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const scanner = "https://marvin-business-scanner.leo-guinan.workers.dev";
+      const stages = [...document.querySelectorAll("[data-stage]")];
+      const show = name => stages.forEach(el => { el.hidden = el.dataset.stage !== name; });
+      const validUrl = raw => { try { const u = new URL(raw); if (!["http:", "https:"].includes(u.protocol) || u.username || u.password) return null; u.hash = ""; return u.href; } catch { return null; } };
+      const rules = { People: /customer|client|audience|buyer|user|member|founder|team|operator/i, Positioning: /for |serves |help|platform|agency|studio|consult|software|product/i, Promise: /help|enable|make|build|grow|save|deliver|transform|support/i, Proof: /case stud|testimonial|client|result|review|trusted|portfolio|work with/i, Priority: /problem|challenge|need|focus|priority|book|contact|start|get started/i, Process: /how it works|process|step|method|approach|workflow|schedule|pricing/i };
+      const sixPs = profile => Object.entries(rules).map(([name, re]) => { const hits = (profile.pages || []).filter(p => re.test(`${p.title || ""} ${p.text || ""}`)); return { name, text: hits.length ? `Signal found across ${hits.length} public page${hits.length === 1 ? "" : "s"}. The recipient should correct this reading.` : "The public site did not make this clear." }; });
+      const esc = text => String(text).replace(/[&<>\"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      const urlInput = document.querySelector("#business-url");
+      const formStatus = document.querySelector("[data-form-status]");
+      document.querySelector("[data-create-form]").addEventListener("submit", async event => {
+        event.preventDefault();
+        const url = validUrl(urlInput.value.trim());
+        if (!url) { formStatus.textContent = "Enter a complete public https:// URL."; return; }
+        const source = (document.querySelector("#source-label").value.trim() || "referral").slice(0, 80);
+        show("scanning");
+        const status = document.querySelector("[data-scan-status]");
+        try {
+          const r = await fetch(`${scanner}/scan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) });
+          const job = await r.json();
+          if (!r.ok) throw Error(job.error || "The scan could not start.");
+          for (let i = 0; i < 90; i++) {
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            const s = await fetch(`${scanner}/scan/${job.id}?token=${encodeURIComponent(job.token)}`).then(response => response.json());
+            if (s.status === "complete") {
+              const link = new URL("site-review.html", location.href);
+              link.searchParams.set("site", url);
+              link.searchParams.set("source", source);
+              document.querySelector("[data-result-meta]").textContent = `${s.profile.usablePages || 0} usable public pages read from ${url}.`;
+              document.querySelector("[data-result-grid]").innerHTML = sixPs(s.profile).map(p => `<article class="handoff-card"><h3>${esc(p.name)}</h3><p>${esc(p.text)}</p></article>`).join("");
+              document.querySelector("[data-share-link]").value = link.href;
+              document.querySelector("[data-open]").href = link.href;
+              show("result");
+              return;
+            }
+            if (s.status === "error") throw Error(s.error || "The scan failed.");
+            status.textContent = `Reading public pages… ${s.pagesScanned || 0} scanned.`;
+          }
+          throw Error("The scan is still running; please try again shortly.");
+        } catch (error) { show("form"); formStatus.textContent = error.message; }
+      });
+      document.querySelector("[data-copy]").addEventListener("click", async () => { const value = document.querySelector("[data-share-link]").value; try { await navigator.clipboard.writeText(value); document.querySelector("[data-copy-status]").textContent = "Link copied."; } catch { document.querySelector("[data-share-link]").select(); document.querySelector("[data-copy-status]").textContent = "Select and copy the link above."; } });
+    })();
+  </script>
+</body>
+</html>
