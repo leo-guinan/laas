@@ -52,6 +52,35 @@ async function sendBookingBrief(env, handoff, booking) {
   return { status: "email_accepted", provider: await response.json() };
 }
 
+async function sendReviewNotice(env, state) {
+  if (!env.RESEND_API_KEY || !env.EMAIL_FROM || !env.EMAIL_TO) return { status: "email_not_configured" };
+  const review = state.review || {};
+  const text = [
+    "A seeded Marvin site-reading review was submitted.",
+    "",
+    `Review ID: ${state.id}`,
+    `Source: ${state.source || "outreach"}`,
+    `Business URL: ${state.businessUrl || "not provided"}`,
+    `Recognition: ${review.recognition || "unknown"}`,
+    `Useful enough to continue: ${review.usefulness || "unknown"}`,
+    "",
+    "Correction:",
+    review.correction || "(none)",
+    "",
+    "How it landed:",
+    review.note || "(none)",
+    "",
+    "This is recipient feedback on a bounded public-site reading, not a testimonial or verified business outcome."
+  ].join("\n");
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from: env.EMAIL_FROM, to: [env.EMAIL_TO], reply_to: env.REPLY_TO, subject: "Marvin site-reading feedback", text })
+  });
+  if (!response.ok) return { status: "email_failed", providerStatus: response.status, providerBody: (await response.text()).slice(0, 300) };
+  return { status: "email_accepted", provider: await response.json() };
+}
+
 async function verifyCalSignature(rawBody, signature, secret) {
   if (signature === "no-secret-provided") return true;
   if (!secret || !signature) return false;
@@ -237,6 +266,8 @@ export class ScanJob {
         submittedAt: new Date().toISOString()
       };
       await this.save({ ...this.data, review });
+      const email = await sendReviewNotice(this.env, { ...this.data, review });
+      await this.save({ ...this.data, review, reviewEmail: email });
       return json(request, { ok: true, recorded: true, reviewId: this.data.id });
     }
     return json(request, { error: "Not found" }, 404);
