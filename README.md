@@ -6,6 +6,7 @@ A minimal, zero-build static sales page designed for GitHub Pages, with a native
 
 - `index.html` — canonical business-leverage sales page
 - `talk-to-marvin.html` — text-first Marvin discovery with optional voice, site scan, handoff, and data boundaries
+- `site-review.html` — seeded outreach flow: pass `?site=https%3A%2F%2Fexample.com&source=outreach-name` to let a recipient inspect Marvin's public-site reading and submit corrections
 - `proof.html` — public proof ledger separating outcomes, interim evidence, experiments, and unknowns
 - `meet-leo.html` — the human half: background, track record, proof in progress
 - `meet-marvin.html` — the agent half: Marvin's role, his evals, known failures
@@ -24,6 +25,8 @@ A minimal, zero-build static sales page designed for GitHub Pages, with a native
 5. Set **Source** to deploy from a branch, then choose `main` and `/ (root)`.
 
 No build step, framework, package manager, or external fonts are required.
+
+The seeded review flow stores a private, seven-day review record in the scanner Durable Object. It records the recipient's recognition rating, concrete correction, usefulness signal, and optional outreach note. It does not create a booking, claim a testimonial, or treat public-site language as a verified business outcome.
 
 ## Design principles
 
